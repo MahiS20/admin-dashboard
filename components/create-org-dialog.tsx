@@ -33,13 +33,6 @@ export default function CreateOrgDialog({ onCreated }: Props) {
     setLoading(true);
     setError("");
 
-    console.log("Submitting:", {
-      name,
-      identifier,
-      verification: { sms, email },
-      license: { startDate, expiryDate: expiryDate || undefined },
-    });
-
     try {
       const res = await fetch("/api/organisations", {
         method: "POST",
@@ -52,103 +45,112 @@ export default function CreateOrgDialog({ onCreated }: Props) {
         }),
       });
 
-      console.log("Response status:", res.status);
       const text = await res.text();
-      console.log("Response text:", text);
+      const data = text ? JSON.parse(text) : null;
 
-      if (!text) {
-        setError("Empty response from server");
-        setLoading(false);
-        return;
-      }
-
-      const data = JSON.parse(text);
-
-      if (data.errors) {
+      if (data?.errors) {
         setError(data.errors[0].message);
       } else {
         setOpen(false);
         onCreated();
+        setName("");
+        setIdentifier("");
+        setSms(false);
+        setEmail(false);
+        setStartDate("");
+        setExpiryDate("");
       }
-    } catch (err) {
-      console.log("Error:", err);
+    } catch {
       setError("Something went wrong");
     }
 
     setLoading(false);
   }
+
+  const inputClass =
+    "bg-[#0a0a0a] border-[#262626] text-[#fafafa] h-10 placeholder:text-[#525252] focus-visible:ring-[#6366f1] focus-visible:ring-1";
+  const labelClass = "text-[#a1a1aa] text-xs font-medium";
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium">
           + Add Organisation
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-slate-900 border-slate-800 text-white">
+      <DialogContent className="bg-[#141414] border-[#262626] text-[#fafafa] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Organisation</DialogTitle>
+          <DialogTitle className="text-[#fafafa]">Create Organisation</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label className="text-slate-300">Name</Label>
+          <div className="flex flex-col gap-1.5">
+            <Label className={labelClass}>Name</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Organisation name"
-              className="bg-slate-800 border-slate-700 text-white"
+              className={inputClass}
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-slate-300">Identifier</Label>
+          <div className="flex flex-col gap-1.5">
+            <Label className={labelClass}>Identifier</Label>
             <Input
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               placeholder="e.g. techcorp"
-              className="bg-slate-800 border-slate-700 text-white"
+              className={inputClass}
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-slate-300">Verification</Label>
-            <div className="flex gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label className={labelClass}>Verification</Label>
+            <div className="flex gap-5 mt-1">
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={sms}
                   onCheckedChange={(v) => setSms(v as boolean)}
+                  className="border-[#262626] data-[state=checked]:bg-[#6366f1] data-[state=checked]:border-[#6366f1]"
                 />
-                <Label className="text-slate-300">SMS</Label>
+                <Label className="text-[#a1a1aa] text-sm">SMS</Label>
               </div>
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={email}
                   onCheckedChange={(v) => setEmail(v as boolean)}
+                  className="border-[#262626] data-[state=checked]:bg-[#6366f1] data-[state=checked]:border-[#6366f1]"
                 />
-                <Label className="text-slate-300">Email</Label>
+                <Label className="text-[#a1a1aa] text-sm">Email</Label>
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-slate-300">License Start Date</Label>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-slate-800 border-slate-700 text-white"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label className={labelClass}>Start Date</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className={labelClass}>Expiry (optional)</Label>
+              <Input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className={inputClass}
+              />
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <Label className="text-slate-300">License Expiry Date (optional)</Label>
-            <Input
-              type="date"
-              value={expiryDate}
-              onChange={(e) => setExpiryDate(e.target.value)}
-              className="bg-slate-800 border-slate-700 text-white"
-            />
-          </div>
-          {error && <p className="text-red-400 text-sm">{error}</p>}
+          {error && (
+            <p className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-md px-3 py-2">
+              {error}
+            </p>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium mt-1"
           >
             {loading ? "Creating..." : "Create Organisation"}
           </Button>
